@@ -21,7 +21,7 @@ complaints.head()
 pl_complaints = pl.read_csv(
     "../data/311-service-requests.csv",
     infer_schema=False,
-    null_values=["", "NA", "NaN"],
+    null_values=["", "NA", "NaN", "N/A"],
 )
 pl_complaints.head()
 
