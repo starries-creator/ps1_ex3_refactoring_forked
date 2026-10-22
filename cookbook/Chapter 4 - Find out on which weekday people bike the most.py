@@ -2,7 +2,6 @@
 import pandas as pd
 import polars as pl
 import matplotlib.pyplot as plt
-import polars as pl
 
 # Make the graphs a bit prettier, and bigger
 plt.style.use("ggplot")
