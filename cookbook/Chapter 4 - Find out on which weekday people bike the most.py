@@ -20,7 +20,10 @@ bikes = pl.read_csv(
     try_parse_dates=True
 )
 
-bikes.select(["Date", "Berri 1"]).to_pandas().plot(x="Date", y="Berri 1")
+plt.figure()
+plt.plot(bikes["Date"].to_list(), bikes["Berri 1"].to_list())
+plt.xlabel("Date")
+plt.ylabel("Berri 1")
 plt.show()
 
 # %% Plot Berri 1 data
@@ -49,7 +52,11 @@ weekday_counts = weekday_counts.with_columns(
 
 # %% Plot results
 # TODO: Plot results using Polars and matplotlib
-weekday_counts.to_pandas().plot(kind="bar", x="weekday_name", y="Berri 1", legend=False)
+plt.figure()
+plt.bar(
+    weekday_counts["weekday_name"].to_list(),
+    weekday_counts["Berri 1"].to_list(),
+)
 plt.title("Cyclists by Weekday on Berri 1")
 plt.xlabel("Weekday")
 plt.ylabel("Number of Cyclists")
