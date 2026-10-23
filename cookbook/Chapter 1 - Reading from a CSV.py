@@ -1,7 +1,8 @@
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import polars as pl
+import seaborn as sns
 
 # %%
 # Reading data from a csv file
@@ -15,12 +16,13 @@ broken_df = pd.read_csv("../data/bikes.csv", encoding="ISO-8859-1")
 
 # TODO: please load the data with the Polars library (do not forget to import Polars at the top of the script) and call it pl_broken_df
 
+pl_broken_df = pl.read_csv("../data/bikes.csv", encoding="ISO-8859-1")
 # %%
 # Look at the first 3 rows
 broken_df[:3]
 
 # TODO: do the same with your polars data frame, pl_broken_df
-
+pl_broken_df.head(3)
 # %%
 # You'll notice that this is totally broken! `read_csv` has a bunch of options that will let us fix that, though. Here we'll
 
@@ -41,8 +43,12 @@ fixed_df = pd.read_csv(
 fixed_df[:3]
 
 # TODO: do the same (or similar) with polars
-
-
+pl_fixed_df = pl.read_csv(
+    "../data/bikes.csv",
+    separator=";",
+    encoding="latin1",
+).with_columns(pl.col("Date").str.to_date(format="%d/%m/%Y"))
+pl_fixed_df[:3]
 # %%
 # Selecting a column
 # When you read a CSV, you get a kind of object called a `DataFrame`, which is made up of rows and columns. You get columns out of a DataFrame the same way you get elements out of a dictionary.
@@ -51,14 +57,20 @@ fixed_df[:3]
 fixed_df["Berri 1"]
 
 # TODO: how would you do this with a Polars data frame?
-
+pl_fixed_df.select("Berri 1")
 
 # %%
 # Plotting is quite easy in Pandas
 fixed_df["Berri 1"].plot()
 
 # TODO: how would you do this with a Polars data frame?
-
+plt.figure()
+sns.lineplot(
+    data=pl_fixed_df.select("Date", "Berri 1").to_dict(as_series=False),
+    x="Date",
+    y="Berri 1",
+    estimator=None,
+)
 
 # %%
 # We can also plot all the columns just as easily. We'll make it a little bigger, too.
@@ -67,3 +79,21 @@ fixed_df["Berri 1"].plot()
 fixed_df.plot(figsize=(15, 10))
 
 # TODO: how would you do this with a Polars data frame? With Polars data frames you might have to use the Seaborn library and it mmight not work out of the box as with pandas.
+long_df = pl_fixed_df.unpivot(
+    # Unpivot only numeric counts; unavailable paths were inferred as strings.
+    on=pl.selectors.numeric(),
+    index="Date",
+    variable_name="Path",
+    value_name="Cyclists",
+)
+
+plt.figure(figsize=(15, 10))
+sns.lineplot(
+    # Pass lists to Seaborn for compatibility with this Polars version.
+    data=long_df.to_dict(as_series=False),
+    x="Date",
+    y="Cyclists",
+    hue="Path",
+    estimator=None,
+)
+plt.show()
