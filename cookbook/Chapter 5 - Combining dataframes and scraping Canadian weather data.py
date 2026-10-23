@@ -3,52 +3,67 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
+from functools import lru_cache
+from io import BytesIO
+from pathlib import Path
+from urllib.request import urlopen
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+URL_TEMPLATE = (
+    "https://climate.meteo.gc.ca/climate_data/bulk_data_e.html"
+    "?format=csv&stationID=5415&Year={year}&Month={month}"
+    "&Day=1&timeframe=1&submit=Download+Data"
+)
+
+
+@lru_cache(maxsize=12)
+def download_weather_csv(year, month):
+    # Reuse each official UTF-8 CSV for the Pandas and Polars examples.
+    with urlopen(URL_TEMPLATE.format(year=year, month=month), timeout=30) as response:
+        return response.read()
 
 plt.style.use("ggplot")
 plt.rcParams["figure.figsize"] = (15, 3)
 plt.rcParams["font.family"] = "sans-serif"
 
 # %%
-# By the end of this chapter, we're going to have downloaded all of Canada's weather data for 2012, and saved it to a CSV. We'll do this by downloading it one month at a time, and then combining all the months together.
+# By the end of this chapter, we'll have downloaded the Montreal station's hourly weather data for 2012 and saved it to a CSV. We'll download one month at a time, then combine the months.
 # Here's the temperature every hour for 2012!
 
-weather_2012_final = pd.read_csv("../data/weather_2012.csv", index_col="date_time")
+weather_2012_final = pd.read_csv(
+    DATA_DIR / "weather_2012.csv", index_col="date_time", parse_dates=True
+)
 weather_2012_final["temperature_c"].plot(figsize=(15, 6))
 plt.show()
 
 # TODO: rewrite using Polars
 
 weather_2012_final_pl = pl.read_csv(
-    "../data/weather_2012.csv",
+    DATA_DIR / "weather_2012.csv",
     try_parse_dates=True
 )
 
 plt.figure(figsize=(15, 6))
 plt.plot(
-    weather_2012_final_pl["date_time"],
-    weather_2012_final_pl["temperature_c"]
+    weather_2012_final_pl["date_time"].to_list(),
+    weather_2012_final_pl["temperature_c"].to_list()
 )
 plt.show()
 
 # %%
 # Okay, let's start from the beginning.
 # We're going to get the data for March 2012, and clean it up
-# You can directly download a csv with a URL using Pandas!
-# Note, the URL the repo provides is faulty but kindly, someone submitted a PR fixing it. Have a look
-# here: https://github.com/jvns/pandas-cookbook/pull/74 and click on "Files changed" and then fix the url.
-
-
-# This URL has to be fixed first!
-url_template = "http://climate.weather.gc.ca/climateData/bulkdata_e.html?format=csv&stationID=5415&Year={year}&Month={month}&timeframe=1&submit=Download+Data"
+# The original cookbook's URL no longer works. Use the current official HTTPS
+# endpoint above; both libraries read the same downloaded UTF-8 CSV bytes.
 
 year = 2012
 month = 3
-url_march = url_template.format(month=3, year=2012)
+url_march = URL_TEMPLATE.format(month=month, year=year)
 weather_mar2012 = pd.read_csv(
-    url_march,
+    BytesIO(download_weather_csv(year, month)),
     index_col="Date/Time (LST)",
     parse_dates=True,
-    encoding="latin1",
+    encoding="utf-8-sig",
     header=0,
 )
 weather_mar2012.head()
@@ -56,9 +71,10 @@ weather_mar2012.head()
 # TODO: rewrite using Polars. Yes, Polars can handle URLs similarly.
 
 weather_mar2012_pl = pl.read_csv(
-    url_march,
+    download_weather_csv(year, month),
     try_parse_dates=True,
-    encoding="latin1"
+    infer_schema_length=None,
+    null_values=["", "NA", "NaN", "N/A"],
 )
 
 weather_mar2012_pl.head()
@@ -91,7 +107,7 @@ weather_mar2012[:5]
 
 # TODO: redo this using polars
 
-weather_mar2012_pl = weather_mar2012_pl.drop(["Year", "Month", "Day", "Time (LST)"], axis = 1)
+weather_mar2012_pl = weather_mar2012_pl.drop(["Year", "Month", "Day", "Time (LST)"])
 weather_mar2012_pl[:5]
 
 # %%
@@ -120,12 +136,12 @@ weather_mar2012_pl = weather_mar2012_pl.rename({
 # Optionally, you can also rename columns more manually for specific cases:
 weather_mar2012 = weather_mar2012.rename(
     columns={
-        'Longitude (x)"': "Longitude",
+        "Longitude (x)": "Longitude",
         "Latitude (y)": "Latitude",
         "Station Name": "Station_Name",
         "Climate ID": "Climate_ID",
         "Temp (°C)": "Temperature_C",
-        "Dew Point Temp (Â°C)": "Dew_Point_Temp_C",
+        "Dew Point Temp (°C)": "Dew_Point_Temp_C",
         "Rel Hum (%)": "Relative_Humidity",
         "Wind Spd (km/h)": "Wind_Speed_kmh",
         "Visibility (km)": "Visibility_km",
@@ -145,12 +161,12 @@ print(weather_mar2012.columns)
 # TODO: redo this using polars
 
 column_mapping = {
-    'Longitude (x)"': "Longitude",
+    "Longitude (x)": "Longitude",
     "Latitude (y)": "Latitude",
     "Station Name": "Station_Name",
     "Climate ID": "Climate_ID",
     "Temp (°C)": "Temperature_C",
-    "Dew Point Temp (Â°C)": "Dew_Point_Temp_C",
+    "Dew Point Temp (°C)": "Dew_Point_Temp_C",
     "Rel Hum (%)": "Relative_Humidity",
     "Wind Spd (km/h)": "Wind_Speed_kmh",
     "Visibility (km)": "Visibility_km",
@@ -169,12 +185,13 @@ print(weather_mar2012_pl.columns)
 weather_mar2012_pl = weather_mar2012_pl.rename({
     col: col.lower()
     for col in weather_mar2012_pl.columns
-})
+}).select("date_time", pl.exclude("date_time"))
 
 print(weather_mar2012_pl.columns)
 
 # %%
 # Notice how it goes up to 25° C in the middle there? That was a big deal. It was March, and people were wearing shorts outside.
+plt.figure()
 weather_mar2012["temperature_c"].plot(figsize=(15, 5))
 plt.show()
 
@@ -182,15 +199,15 @@ plt.show()
 
 plt.figure(figsize=(15, 5))
 plt.plot(
-    weather_mar2012_pl["date_time"],
-    weather_mar2012_pl["temperature_c"]
+    weather_mar2012_pl["date_time"].to_list(),
+    weather_mar2012_pl["temperature_c"].to_list()
 )
 plt.show()
 
 # %%
 # This one's just for fun -- we've already done this before, using groupby and aggregate! We will learn whether or not it gets colder at night. Well, obviously. But let's do it anyway.
 temperatures = weather_mar2012[["temperature_c"]].copy()
-print(temperatures.head)
+print(temperatures.head())
 temperatures.loc[:, "Hour"] = weather_mar2012.index.hour
 temperatures.groupby("Hour").aggregate(np.median).plot()
 plt.show()
@@ -211,9 +228,10 @@ hourly_median_pl = temperatures_pl.group_by("Hour").agg(
     pl.col("temperature_c").median()
 ).sort("Hour")
 
+plt.figure()
 plt.plot(
-    hourly_median_pl["Hour"],
-    hourly_median_pl["temperature_c"]
+    hourly_median_pl["Hour"].to_list(),
+    hourly_median_pl["temperature_c"].to_list()
 )
 plt.show()
 
@@ -248,10 +266,11 @@ def clean_data(data):
 
 
 def download_weather_month(year, month):
-    url_template = "http://climate.weather.gc.ca/climate_data/bulk_data_e.html?format=csv&stationID=5415&Year={year}&Month={month}&timeframe=1&submit=Download+Data"
-    url = url_template.format(year=year, month=month)
     weather_data = pd.read_csv(
-        url, index_col="Date/Time (LST)", parse_dates=True, header=0
+        BytesIO(download_weather_csv(year, month)),
+        index_col="Date/Time (LST)",
+        parse_dates=True,
+        encoding="utf-8-sig",
     )
     weather_data_clean = clean_data(weather_data)
     return weather_data_clean
@@ -297,24 +316,17 @@ def clean_data_pl(data):
     data = data.rename({
         col: col.lower()
         for col in data.columns
-    })
+    }).select("date_time", pl.exclude("date_time"))
 
     return data
 
 
 def download_weather_month_pl(year, month):
-    url_template = (
-        "http://climate.weather.gc.ca/climate_data/"
-        "bulk_data_e.html?format=csv&stationID=5415"
-        "&Year={year}&Month={month}"
-        "&timeframe=1&submit=Download+Data"
-    )
-
-    url = url_template.format(year=year, month=month)
-
     weather_data = pl.read_csv(
-        url,
-        try_parse_dates=True
+        download_weather_csv(year, month),
+        try_parse_dates=True,
+        infer_schema_length=None,
+        null_values=["", "NA", "NaN", "N/A"],
     )
 
     weather_data_clean = clean_data_pl(weather_data)
@@ -346,8 +358,10 @@ weather_2012_pl.head()
 
 # %%
 # Now, let's save the data.
-weather_2012.to_csv("../data/weather_2012.csv")
+weather_2012.to_csv(DATA_DIR / "weather_2012.csv")
 
 # TODO: use polars to save the data.
 
-weather_2012_pl.write_csv("../data/weather_2012.csv")
+weather_2012_pl.write_csv(
+    DATA_DIR / "weather_2012.csv", datetime_format="%Y-%m-%d %H:%M:%S"
+)
