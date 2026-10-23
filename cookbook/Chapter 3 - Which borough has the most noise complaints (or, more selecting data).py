@@ -2,6 +2,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import polars as pl
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 
 # Make the graphs a bit prettier, and bigger
@@ -16,12 +19,12 @@ pd.set_option("display.max_columns", 60)
 # %%
 # Let's continue with our NYC 311 service requests example.
 # because of mixed types we specify dtype to prevent any errors
-complaints = pd.read_csv("../data/311-service-requests.csv", dtype="unicode")
+complaints = pd.read_csv(DATA_DIR / "311-service-requests.csv", dtype="unicode")
 
 # %%
 # TODO: rewrite the above using the polars library (you might have to import it above) and call the data frame pl_complaints
 pl_complaints = pl.read_csv(
-    "../data/311-service-requests.csv",
+    DATA_DIR / "311-service-requests.csv",
     infer_schema=False,
     null_values=["", "NA", "NaN", "N/A"],
 )
