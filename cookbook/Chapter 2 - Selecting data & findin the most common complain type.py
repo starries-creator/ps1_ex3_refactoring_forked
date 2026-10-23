@@ -2,12 +2,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import polars as pl
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 # %%
 # We're going to use a new dataset here, to demonstrate how to deal with larger datasets. This is a subset of the of 311 service requests from [NYC Open Data](https://nycopendata.socrata.com/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9).
 # because of mixed types we specify dtype to prevent any errors
 
-complaints = pd.read_csv("../data/311-service-requests.csv", dtype="unicode")
+complaints = pd.read_csv(DATA_DIR / "311-service-requests.csv", dtype="unicode")
 complaints.head()
 
 
@@ -19,7 +22,7 @@ complaints.head()
 # see a discussion about dtype argument here: https://github.com/pola-rs/polars/issues/8230
 
 pl_complaints = pl.read_csv(
-    "../data/311-service-requests.csv",
+    DATA_DIR / "311-service-requests.csv",
     infer_schema=False,
     null_values=["", "NA", "NaN", "N/A"],
 )

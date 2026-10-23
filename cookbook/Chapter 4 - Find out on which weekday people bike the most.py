@@ -2,6 +2,9 @@
 import pandas as pd
 import polars as pl
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 # Make the graphs a bit prettier, and bigger
 plt.style.use("ggplot")
@@ -14,7 +17,7 @@ pd.set_option("display.max_columns", 60)
 # %% Load the data
 # TODO: Load the data using Polars
 bikes = pl.read_csv(
-    "data/bikes.csv",  
+    DATA_DIR / "bikes.csv",
     separator=";",
     encoding="latin1",
     try_parse_dates=True

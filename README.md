@@ -1,53 +1,46 @@
-# Pandas cookbook
+# Pandas to Polars Cookbook
 
-This repo was copied from [pandas_cookbook](https://github.com/jvns/pandas-cookbook). Do have a
-look at the original.
+This repository adapts examples from [`pandas_cookbook`](https://github.com/jvns/pandas-cookbook) to teach common data analysis tasks with [Polars](https://pola.rs/). Chapters 1–3 and 5 retain Pandas examples for comparison; Chapter 4 uses a Polars data-processing flow.
 
-There are several chapters that guide you through how to use pandas in the
-[cookbook folder](./cookbook). It will be your job to create a cookbook for polars.
+Chapters 1–5 include Polars implementations. Chapters 6–8 retain the original Pandas examples and are starter examples for further Polars work.
 
-## Getting started
+## Set up
 
-1. Fork this repo.
-2. Clone the forked repo and open it in VS Code.
-3. Create a virtual environment from the environment.yml:
-4. Select this environment as your interpreter in VS Code.
+You need Git and Conda (Miniconda, Anaconda or Miniforge). From a terminal, clone this repository and create the project environment:
 
-## Objective
+```bash
+git clone https://github.com/starries-creator/ps1_ex3_refactoring_forked.git
+cd ps1_ex3_refactoring_forked
+conda env create -f environment.yml
+conda activate polars_cookbook
+```
 
-Refactor the "Pandas cookbook" repository into a "Polars cookbook," showcasing common
-functionalities of the Polars library.
+Optionally open the repository in VS Code and select the `polars_cookbook` environment as the Python interpreter. The scripts in Chapters 1–5 resolve their bundled data files relative to each script, so the commands below work from the repository root.
 
-## Background
+## Run the chapters
 
-A common task as a data scientist is refactoring code. Refactoring code involves improving its
-readability, efficiency, or adapting it to use different libraries. This exercise focuses on
-rewriting Pandas code using Polars, a relatively new data manipulation library.
+Run a chapter from the activated environment:
 
-By completing this assignment, you'll create a valuable "Polars cookbook" on your GitHub profile
-that demonstrates common data manipulation tasks using the Polars library.
+```bash
+python "cookbook/Chapter 1 - Reading from a CSV.py"
+python "cookbook/Chapter 2 - Selecting data & findin the most common complain type.py"
+python "cookbook/Chapter 3 - Which borough has the most noise complaints (or, more selecting data).py"
+python "cookbook/Chapter 4 - Find out on which weekday people bike the most.py"
+python "cookbook/Chapter 5 - Combining dataframes and scraping Canadian weather data.py"
+```
 
-Polars is quickly gaining popularity because of its nice syntax and speed.
+The scripts display Matplotlib figures. Close each figure window to let execution continue. Chapter 5 needs an internet connection to download 12 monthly CSV files from the Government of Canada's weather service: 8,784 hourly observations for Montreal in 2012. As part of that exercise, it writes the combined result to `data/weather_2012.csv`, replacing the bundled file.
 
-## Tasks
+For a headless run (for example, in CI), set Matplotlib's backend to `Agg`:
 
-1. Fork the repository from the Cambridge-FDS workspace:
-   https://github.com/cambridge-FDS/pandas_to_polars_cookbook
-2. Divide the chapters among team members, ensuring each person is responsible for at least one
-   chapter of the cookbook  (i.e. if you are four group members, you should do at least four chapters).
-3. Rewrite each Pandas implementation using Polars. Note that sometimes this might not be directly
-   possible. Particularly plotting is harder with a Polars data frame at the moment.
-4. Create a separate Pull Request (PR) for each change implemented.
-5. Have team members review each other's PRs to ensure everyone gains exposure to various Pandas
-   and Polars functionalities across all chapters.
+```bash
+MPLBACKEND=Agg python "cookbook/Chapter 1 - Reading from a CSV.py"
+```
 
-## Guidelines
+Replace the script path with the chapter you want to run.
 
-- Keep Pull Requests concise and focused on specific changes.
-- Each team member should provide PR reviews to maximise learning opportunities.
-- After forking the repo, team members can clone it directly from their teammate's GitHub page.
+## Assignment outline
 
-## Resource
+The exercise is to adapt Pandas implementations to Polars, using Matplotlib or another suitable approach where direct Polars plotting is unavailable. Divide chapter ownership among the team so each member is responsible for at least one chapter. Make focused pull requests and review one another's changes.
 
-For an introduction to Polars, refer to this tutorial:
-https://calmcode.io/course/polars/introduction
+For an introduction to Polars, see the [Calmcode Polars course](https://calmcode.io/course/polars/introduction).
